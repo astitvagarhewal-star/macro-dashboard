@@ -718,3 +718,8 @@ def get_calendar() -> dict[str, Any]:
     except Exception as exc:
         fallback = _failure_payload({"events": _clone(CALENDAR_EVENTS)}, f"calendar fallback: {exc}")
         return _set_cached("calendar", fallback)
+
+
+# Vercel serverless handler
+from mangum import Mangum
+handler = Mangum(app)

@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+mangum
 yfinance
 requests
 beautifulsoup4
