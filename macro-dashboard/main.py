@@ -28,6 +28,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Vercel serverless handler
+from mangum import Mangum
+handler = Mangum(app)
 
 CACHE_TTL_SECONDS = 300
 _cache: dict[str, dict[str, Any]] = {}
