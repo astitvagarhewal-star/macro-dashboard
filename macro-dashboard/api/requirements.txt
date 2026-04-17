@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+mangum
+yfinance
+requests
+beautifulsoup4
+python-dateutil
