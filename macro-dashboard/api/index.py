@@ -573,6 +573,111 @@ CALENDAR_EVENTS = [
 ]
 
 
+# Live Market News Data - expandable with real APIs
+NEWS_DATA = [
+    {
+        "id": "1",
+        "headline": "RBI Governor announces unexpected rate pause at 6.5%",
+        "source": "Economic Times",
+        "timestamp": "2025-04-18T14:30:00Z",
+        "impact": "high",
+        "category": "RBI",
+        "tickers": ["NIFTY", "BANKNIFTY"],
+        "url": "https://economictimes.indiatimes.com"
+    },
+    {
+        "id": "2",
+        "headline": "Fed Chair signals potential rate cuts in Q3 2025",
+        "source": "Bloomberg",
+        "timestamp": "2025-04-18T12:15:00Z",
+        "impact": "high",
+        "category": "Global",
+        "tickers": ["USDINR", "GOLD"],
+        "url": "https://bloomberg.com"
+    },
+    {
+        "id": "3",
+        "headline": "Reliance Industries Q4 earnings beat estimates by 12%",
+        "source": "MoneyControl",
+        "timestamp": "2025-04-18T10:45:00Z",
+        "impact": "high",
+        "category": "Earnings",
+        "tickers": ["RELIANCE"],
+        "url": "https://moneycontrol.com"
+    },
+    {
+        "id": "4",
+        "headline": "TCS announces $2B buyback program",
+        "source": "Business Standard",
+        "timestamp": "2025-04-18T09:20:00Z",
+        "impact": "medium",
+        "category": "Corporate",
+        "tickers": ["TCS", "NIFTYIT"],
+        "url": "https://business-standard.com"
+    },
+    {
+        "id": "5",
+        "headline": "Elon Musk tweets about India EV market expansion plans",
+        "source": "Twitter/X",
+        "timestamp": "2025-04-18T08:30:00Z",
+        "impact": "medium",
+        "category": "CEO",
+        "tickers": ["TATASTEEL", "MARUTI"],
+        "url": "https://x.com/elonmusk"
+    },
+    {
+        "id": "6",
+        "headline": "Trump announces new tariffs on Asian imports",
+        "source": "Reuters",
+        "timestamp": "2025-04-17T22:00:00Z",
+        "impact": "high",
+        "category": "Global",
+        "tickers": ["NIFTY", "USDINR"],
+        "url": "https://reuters.com"
+    },
+    {
+        "id": "7",
+        "headline": "SEBI tightens norms for F&O trading",
+        "source": "Financial Express",
+        "timestamp": "2025-04-17T16:45:00Z",
+        "impact": "medium",
+        "category": "Regulatory",
+        "tickers": ["NSE"],
+        "url": "https://financialexpress.com"
+    },
+    {
+        "id": "8",
+        "headline": "HDFC Bank merger complete, new entity trading begins",
+        "source": "LiveMint",
+        "timestamp": "2025-04-17T11:30:00Z",
+        "impact": "high",
+        "category": "Corporate",
+        "tickers": ["HDFCBANK"],
+        "url": "https://livemint.com"
+    },
+    {
+        "id": "9",
+        "headline": "Oil prices surge 3% on Middle East tensions",
+        "source": "CNBC",
+        "timestamp": "2025-04-17T06:15:00Z",
+        "impact": "high",
+        "category": "Commodity",
+        "tickers": ["BRENT", "ONGC"],
+        "url": "https://cnbc.com"
+    },
+    {
+        "id": "10",
+        "headline": "Infosys raises FY26 revenue guidance",
+        "source": "ET Markets",
+        "timestamp": "2025-04-16T15:20:00Z",
+        "impact": "medium",
+        "category": "Earnings",
+        "tickers": ["INFY", "NIFTYIT"],
+        "url": "https://economictimes.indiatimes.com"
+    },
+]
+
+
 @app.get("/", response_class=HTMLResponse, response_model=None)
 def serve_index():
     index_path = Path(__file__).with_name("index.html")
@@ -721,6 +826,61 @@ def get_calendar() -> dict[str, Any]:
     except Exception as exc:
         fallback = _failure_payload({"events": _clone(CALENDAR_EVENTS)}, f"calendar fallback: {exc}")
         return _set_cached("calendar", fallback)
+
+
+@app.get("/api/news")
+def get_news(
+    impact: str | None = None,
+    category: str | None = None,
+    limit: int = 20
+) -> dict[str, Any]:
+    """
+    Get live market news with optional filtering.
+    
+    Query params:
+    - impact: 'high', 'medium', 'low' (optional)
+    - category: 'RBI', 'Global', 'Earnings', 'Corporate', 'CEO', 'Regulatory', 'Commodity'
+    - limit: max number of items (default 20)
+    """
+    cached = _get_cached("news")
+    if cached is not None:
+        return cached
+
+    try:
+        # Start with mock data (replace with real API calls)
+        news_items = _clone(NEWS_DATA)
+        
+        # Apply filters
+        if impact:
+            news_items = [n for n in news_items if n["impact"] == impact.lower()]
+        if category:
+            news_items = [n for n in news_items if n["category"].lower() == category.lower()]
+        
+        # Sort by timestamp (newest first)
+        news_items.sort(key=lambda x: x["timestamp"], reverse=True)
+        
+        # Apply limit
+        news_items = news_items[:limit]
+        
+        # Calculate stats
+        stats = {
+            "total": len(NEWS_DATA),
+            "high_impact": len([n for n in NEWS_DATA if n["impact"] == "high"]),
+            "last_updated": datetime.now().isoformat()
+        }
+        
+        payload = _success_payload({
+            "items": news_items,
+            "stats": stats,
+            "filters": {"impact": impact, "category": category, "limit": limit}
+        })
+        return _set_cached("news", payload)
+    except Exception as exc:
+        fallback = _failure_payload(
+            {"items": _clone(NEWS_DATA)[:5], "stats": {}, "filters": {}},
+            f"news fallback: {exc}"
+        )
+        return _set_cached("news", fallback)
 
 
 # Vercel serverless handler
