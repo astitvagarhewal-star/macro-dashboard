@@ -42,7 +42,7 @@
 .sk{position:relative;overflow:hidden;background:#1c2535}.sk:after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.08);animation:skeleton 1.2s ease-in-out infinite}.line{height:10px;border-radius:2px;margin-bottom:6px}.line:last-child{margin-bottom:0}.s{width:35%}.m{width:58%}.l{width:82%}.t{height:22px;width:50%}
 .toast{position:fixed;bottom:12px;right:12px;max-width:320px;padding:10px 14px;background:var(--bg-card);border:1px solid var(--border-bright);border-radius:4px;font-size:11px;color:var(--text-secondary);z-index:50;transform:translateY(100px);opacity:0;transition:all .3s ease}.toast.show{transform:translateY(0);opacity:1}.toast.err{border-color:var(--accent-red);color:var(--accent-red)}.toast.success{border-color:var(--accent-green);color:var(--accent-green)}
 #connStatus.off{background:var(--text-tertiary);animation:none}#connStatus.error{background:var(--accent-red);animation:none}
-@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}@keyframes skeleton{0%,100%{opacity:.4}50%{opacity:.8}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}@keyframes skeleton{0%,100%{opacity:.4}50%{opacity:.8}}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @media (max-width:900px){.ticker{display:none}.main{padding-top:48px}.top{grid-template-columns:1fr;height:auto;padding:6px 8px}.tabs{justify-content:flex-start;overflow-x:auto}.top-r{justify-content:flex-start}.strip,.g3,.g2,.g4,.g8,.gScale{grid-template-columns:1fr}.row,.rrow,.event{grid-template-columns:1fr}.rv,.rm,.rval,.rmeta{text-align:left}}
 </style>
 </head>
@@ -55,6 +55,7 @@
     <button class="tab" data-tab="sectors" type="button" role="tab" aria-selected="false">SECTORS</button>
     <button class="tab" data-tab="options" type="button" role="tab" aria-selected="false">OPTIONS</button>
     <button class="tab" data-tab="calendar" type="button" role="tab" aria-selected="false">CALENDAR</button>
+    <button class="tab" data-tab="news" type="button" role="tab" aria-selected="false">NEWS</button>
   </nav>
   <div class="top-r"><span class="live" id="connStatus"></span><span class="caps" id="connText">LIVE</span><span id="updated">Last updated: --</span></div>
 </div>
@@ -76,6 +77,60 @@
   <section class="pane" id="pane-sectors"><div class="g4" id="sectorBig"></div><section class="panel"><div class="hdr"><h2 class="sec">Sector Performance Ranking</h2></div><div class="chart"><canvas id="rankChart"></canvas></div></section></section>
   <section class="pane" id="pane-options"><div class="g4" id="optStats"></div><section class="panel"><div class="hdr"><h2 class="sec">PCR History</h2></div><div class="chart"><canvas id="pcrChart"></canvas></div><div class="gScale" id="scale"></div></section></section>
   <section class="pane" id="pane-calendar"><section class="panel"><div class="hdr"><h2 class="sec">Macro Event Timeline</h2></div><div id="timeline"></div></section></section>
+  <section class="pane" id="pane-news">
+    <div class="g2">
+      <section class="panel" style="grid-column:1/-1">
+        <div class="hdr">
+          <h2 class="sec">Live Market News</h2>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="badge" id="newsFilter" style="cursor:pointer">Filter: All</span>
+            <span class="badge" id="newsAutoPlay" style="cursor:pointer;background:var(--accent-green);color:#000">Auto: ON</span>
+            <span class="err" id="dot-news"></span>
+          </div>
+        </div>
+        <div id="newsBox"></div>
+      </section>
+    </div>
+    <div class="g2" id="newsDetail" style="display:none">
+      <section class="panel">
+        <div class="hdr"><h2 class="sec">Breaking News Ticker</h2></div>
+        <div id="breakingNews" style="padding:12px;background:var(--bg-card);border-radius:4px;min-height:80px;display:flex;align-items:center;justify-content:center;font-size:14px;text-align:center"></div>
+        <div style="display:flex;justify-content:center;gap:12px;margin-top:12px">
+          <button class="tab" id="prevNews" style="min-width:80px">&lt; Prev</button>
+          <button class="tab" id="nextNews" style="min-width:80px">Next &gt;</button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="hdr"><h2 class="sec">News Settings</h2></div>
+        <div style="padding:12px;display:grid;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span>Auto-rotate interval</span>
+            <select id="newsInterval" style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);padding:4px 8px;border-radius:4px">
+              <option value="5">5 seconds</option>
+              <option value="10" selected>10 seconds</option>
+              <option value="15">15 seconds</option>
+              <option value="30">30 seconds</option>
+            </select>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span>Show only high impact</span>
+            <input type="checkbox" id="highImpactOnly" style="cursor:pointer">
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span>Sound alerts</span>
+            <input type="checkbox" id="soundAlerts" style="cursor:pointer">
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span>Desktop notifications</span>
+            <input type="checkbox" id="desktopNotif" style="cursor:pointer">
+          </div>
+          <div style="font-size:10px;color:var(--text-tertiary);margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+            Sources: Economic Times, Bloomberg, Reuters, Twitter/X, SEBI, NSE
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
   <footer class="footer"><span>Data terminal for Indian retail traders. Auto-refreshes every 5 min. Not financial advice.</span><span class="datepill">v2.0</span></footer>
 <div id="debugPanel" style="position:fixed;bottom:40px;right:12px;background:#111820;border:1px solid #333;padding:8px;font-size:10px;color:#8899aa;max-width:300px;z-index:100;display:none;"></div>
 </main>
@@ -85,7 +140,11 @@
 const API_BASE = location.protocol === "file:" ? "http://127.0.0.1:8000" : "",
       FETCH_TIMEOUT = 15000,
       REFRESH = 300000,
-      S = {snapshot:null,fii:null,sectors:null,mood:null,pcr:null,calendar:null},
+      S = {snapshot:null,fii:null,sectors:null,mood:null,pcr:null,calendar:null,news:null},
+      NEWS_CURRENT = 0,
+      NEWS_AUTO = true,
+      NEWS_INTERVAL = 10000,
+      NEWS_TIMER = null,
       C = {},
       el = {};
 let toastTimer=null;
@@ -120,6 +179,10 @@ function initElements(){
   el.timeline = document.getElementById("timeline");
   el.updated = document.getElementById("updated");
   el.tabs = document.getElementById("tabs");
+  el.newsBox = document.getElementById("newsBox");
+  el.breakingNews = document.getElementById("breakingNews");
+  el.newsAutoPlay = document.getElementById("newsAutoPlay");
+  el.newsFilter = document.getElementById("newsFilter");
 }
 
 function skeleton(){
@@ -256,13 +319,16 @@ function renderTabs(){
     const cal=S.calendar?.events||[];
     el.timeline.innerHTML=cal.map(e=>'<div class="event" style="border-color:'+eventBorder(e.type)+'"><div class="datepill">'+esc(e.date)+'</div><div><div class="title">'+esc(e.event)+'</div><div class="metaRow"><span class="rtype '+typeClass(e.type)+'">'+esc(e.type)+'</span><span class="impact '+impactClass(e.impact)+'">'+esc(e.impact)+'</span></div></div><div class="datepill">'+daysUntil(e.date)+'d</div></div>').join('');
   }
+  
+  // Render news
+  renderNews();
 }
-function setDots(){["snapshot","fii","mood","calendar"].forEach(k=>document.getElementById(`dot-${k}`).classList.toggle("on",hasErr(S[k])));document.getElementById("dot-sector").classList.toggle("on",hasErr(S.sectors)||hasErr(S.pcr))}
+function setDots(){["snapshot","fii","mood","calendar","news"].forEach(k=>document.getElementById(`dot-${k}`).classList.toggle("on",hasErr(S[k])));document.getElementById("dot-sector").classList.toggle("on",hasErr(S.sectors)||hasErr(S.pcr))}
 function stamp(){el.updated.textContent=`Last updated: ${new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short"}).format(new Date())}`}
 function render(){
   debug('render() start');
   debug('els:'+Object.keys(el).filter(k=>el[k]).join(','));
-  debug('data:'+JSON.stringify({snapshot:!!S.snapshot,fii:!!S.fii,sectors:!!S.sectors,mood:!!S.mood,pcr:!!S.pcr,calendar:!!S.calendar}));
+  debug('data:'+JSON.stringify({snapshot:!!S.snapshot,fii:!!S.fii,sectors:!!S.sectors,mood:!!S.mood,pcr:!!S.pcr,calendar:!!S.calendar,news:!!S.news}));
   try{
     renderOverview();
     debug('renderOverview done');
@@ -273,7 +339,150 @@ function render(){
     debug('render() complete');
   }catch(e){debug('ERROR:'+(e?.message||String(e)));console.error('Render error:',e);}
 }
-async function load(){try{const [snapshot,fii,sectors,mood,pcr,calendar]=await Promise.allSettled([getJSON('/api/snapshot'),getJSON('/api/fii-dii'),getJSON('/api/sectors'),getJSON('/api/mood'),getJSON('/api/pcr'),getJSON('/api/calendar')]);S.snapshot=snapshot.status==='fulfilled'?snapshot.value:{error:true};S.fii=fii.status==='fulfilled'?fii.value:{error:true,data:[]};S.sectors=sectors.status==='fulfilled'?sectors.value:{error:true,sectors:[]};S.mood=mood.status==='fulfilled'?mood.value:{error:true,components:{}};S.pcr=pcr.status==='fulfilled'?pcr.value:{error:true,history:[]};S.calendar=calendar.status==='fulfilled'?calendar.value:{error:true,events:[]};render();updateConnStatus(true)}catch(e){console.error('Load error:',e,e?.stack);showToast('Load: '+(e?.message||String(e)),'err');updateConnStatus(false)}}
+
+// News display functions
+function formatTimeAgo(timestamp) {
+  const now = new Date();
+  const then = new Date(timestamp);
+  const diff = Math.floor((now - then) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return `${Math.floor(diff/86400)}d ago`;
+}
+
+function impactColor(impact) {
+  return impact === 'high' ? 'var(--accent-red)' : impact === 'medium' ? 'var(--accent-amber)' : 'var(--text-secondary)';
+}
+
+function categoryBadge(category) {
+  const colors = {
+    'RBI': 'var(--accent-blue)',
+    'Global': 'var(--accent-purple)',
+    'Earnings': 'var(--accent-green)',
+    'Corporate': 'var(--accent-amber)',
+    'CEO': '#ff6b9d',
+    'Regulatory': '#ff5722',
+    'Commodity': '#00bcd4'
+  };
+  return colors[category] || 'var(--text-secondary)';
+}
+
+function renderNews() {
+  const news = S.news?.items || [];
+  const stats = S.news?.stats || {};
+  
+  if (el.newsBox) {
+    if (news.length === 0) {
+      el.newsBox.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-secondary)">No news available</div>';
+    } else {
+      el.newsBox.innerHTML = news.map((n, i) => `
+        <div class="event" style="cursor:pointer;margin-bottom:8px;border-left-color:${impactColor(n.impact)}" onclick="showBreakingNews(${i})">
+          <div style="display:flex;flex-direction:column;gap:4px;width:100%">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="badge" style="background:${categoryBadge(n.category)}20;color:${categoryBadge(n.category)};border-color:${categoryBadge(n.category)}40">${esc(n.category)}</span>
+              <span class="badge" style="color:${impactColor(n.impact)}">${esc(n.impact.toUpperCase())}</span>
+            </div>
+            <div class="title" style="font-size:13px">${esc(n.headline)}</div>
+            <div class="metaRow">
+              <span style="font-size:10px;color:var(--text-secondary)">${esc(n.source)}</span>
+              <span style="font-size:10px;color:var(--text-tertiary)">${formatTimeAgo(n.timestamp)}</span>
+              ${n.tickers.map(t => `<span class="badge" style="font-size:9px;padding:2px 4px">${esc(t)}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+  
+  // Show news detail panel if we have news
+  const newsDetail = document.getElementById('newsDetail');
+  if (newsDetail && news.length > 0) {
+    newsDetail.style.display = 'grid';
+  }
+  
+  // Update breaking news display
+  updateBreakingNews();
+}
+
+function updateBreakingNews() {
+  const news = S.news?.items || [];
+  if (news.length === 0 || !el.breakingNews) return;
+  
+  const n = news[NEWS_CURRENT % news.length];
+  el.breakingNews.innerHTML = `
+    <div style="animation:fadeIn 0.5s ease">
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px">
+        <span class="badge" style="background:${categoryBadge(n.category)}20;color:${categoryBadge(n.category)};border-color:${categoryBadge(n.category)}40">${esc(n.category)}</span>
+        <span class="badge" style="color:${impactColor(n.impact)}">${esc(n.impact.toUpperCase())}</span>
+      </div>
+      <div style="font-weight:500;margin-bottom:8px">${esc(n.headline)}</div>
+      <div style="font-size:11px;color:var(--text-secondary)">
+        ${esc(n.source)} • ${formatTimeAgo(n.timestamp)}
+      </div>
+      ${n.tickers.length ? `<div style="margin-top:8px">${n.tickers.map(t => `<span class="badge" style="font-size:9px;padding:2px 6px;margin:0 2px">${esc(t)}</span>`).join('')}</div>` : ''}
+    </div>
+  `;
+}
+
+function showBreakingNews(index) {
+  NEWS_CURRENT = index;
+  updateBreakingNews();
+  document.getElementById('newsDetail').scrollIntoView({ behavior: 'smooth' });
+}
+
+function nextNews() {
+  const news = S.news?.items || [];
+  if (news.length === 0) return;
+  NEWS_CURRENT = (NEWS_CURRENT + 1) % news.length;
+  updateBreakingNews();
+}
+
+function prevNews() {
+  const news = S.news?.items || [];
+  if (news.length === 0) return;
+  NEWS_CURRENT = (NEWS_CURRENT - 1 + news.length) % news.length;
+  updateBreakingNews();
+}
+
+function toggleNewsAuto() {
+  NEWS_AUTO = !NEWS_AUTO;
+  const btn = document.getElementById('newsAutoPlay');
+  if (btn) {
+    btn.textContent = NEWS_AUTO ? 'Auto: ON' : 'Auto: OFF';
+    btn.style.background = NEWS_AUTO ? 'var(--accent-green)' : 'var(--accent-red)';
+    btn.style.color = NEWS_AUTO ? '#000' : '#fff';
+  }
+  if (NEWS_AUTO) {
+    startNewsRotation();
+  } else {
+    stopNewsRotation();
+  }
+}
+
+function startNewsRotation() {
+  stopNewsRotation();
+  if (NEWS_AUTO) {
+    NEWS_TIMER = setInterval(nextNews, NEWS_INTERVAL);
+  }
+}
+
+function stopNewsRotation() {
+  if (NEWS_TIMER) {
+    clearInterval(NEWS_TIMER);
+    NEWS_TIMER = null;
+  }
+}
+
+function updateNewsInterval() {
+  const select = document.getElementById('newsInterval');
+  if (select) {
+    NEWS_INTERVAL = parseInt(select.value) * 1000;
+    startNewsRotation();
+  }
+}
+
+async function load(){try{const [snapshot,fii,sectors,mood,pcr,calendar,news]=await Promise.allSettled([getJSON('/api/snapshot'),getJSON('/api/fii-dii'),getJSON('/api/sectors'),getJSON('/api/mood'),getJSON('/api/pcr'),getJSON('/api/calendar'),getJSON('/api/news')]);S.snapshot=snapshot.status==='fulfilled'?snapshot.value:{error:true};S.fii=fii.status==='fulfilled'?fii.value:{error:true,data:[]};S.sectors=sectors.status==='fulfilled'?sectors.value:{error:true,sectors:[]};S.mood=mood.status==='fulfilled'?mood.value:{error:true,components:{}};S.pcr=pcr.status==='fulfilled'?pcr.value:{error:true,history:[]};S.calendar=calendar.status==='fulfilled'?calendar.value:{error:true,events:[]};S.news=news.status==='fulfilled'?news.value:{error:true,items:[]};render();updateConnStatus(true)}catch(e){console.error('Load error:',e,e?.stack);showToast('Load: '+(e?.message||String(e)),'err');updateConnStatus(false)}}
 // Initialize elements and start app
 document.addEventListener("DOMContentLoaded", () => {
   initElements();
@@ -283,6 +492,20 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Setup tabs event listener after elements are initialized
   if(el.tabs){el.tabs.addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(x=>{x.classList.toggle("active",x===b);x.setAttribute("aria-selected",x===b)});document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("active",x.id===`pane-${b.dataset.tab}`))});}
+  
+  // News controls
+  const prevBtn = document.getElementById('prevNews');
+  const nextBtn = document.getElementById('nextNews');
+  const autoBtn = document.getElementById('newsAutoPlay');
+  const intervalSelect = document.getElementById('newsInterval');
+  
+  if(prevBtn) prevBtn.addEventListener('click', () => { stopNewsRotation(); prevNews(); if(NEWS_AUTO) startNewsRotation(); });
+  if(nextBtn) nextBtn.addEventListener('click', () => { stopNewsRotation(); nextNews(); if(NEWS_AUTO) startNewsRotation(); });
+  if(autoBtn) autoBtn.addEventListener('click', toggleNewsAuto);
+  if(intervalSelect) intervalSelect.addEventListener('change', updateNewsInterval);
+  
+  // Start news rotation
+  startNewsRotation();
 });
 </script>
 </body>
